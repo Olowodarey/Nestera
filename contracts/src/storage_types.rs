@@ -1,4 +1,4 @@
-use soroban_sdk::{contracttype, Address, Symbol};
+use soroban_sdk::{contracttype, contracterror, Address, Symbol};
 
 /// Represents the different types of savings plans available in Nestera
 #[contracttype]
@@ -33,6 +33,32 @@ pub struct User {
     pub savings_count: u32,
 }
 
+/// Represents a Lock Save plan with fixed duration
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct LockSave {
+    pub id: u64,
+    pub owner: Address,
+    pub amount: i128,
+    pub interest_rate: u32,
+    pub start_time: u64,
+    pub maturity_time: u64,
+    pub is_withdrawn: bool,
+}
+
+/// Custom error types for the savings contract
+#[contracterror]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum SavingsError {
+    InvalidAmount = 1,
+    InvalidDuration = 2,
+    UserNotFound = 3,
+    LockNotFound = 4,
+    LockNotMatured = 5,
+    AlreadyWithdrawn = 6,
+    Unauthorized = 7,
+}
+
 /// Storage keys for the contract's persistent data
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -41,4 +67,10 @@ pub enum DataKey {
     User(Address),
     /// Maps a (user address, plan_id) tuple to a SavingsPlan
     SavingsPlan(Address, u64),
+    /// Maps lock plan ID to LockSave struct
+    LockSave(u64),
+    /// Maps user to a list of their LockSave IDs
+    UserLockSaves(Address),
+    /// Stores the next auto-incrementing LockSave ID
+    NextLockId,
 }
