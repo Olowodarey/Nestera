@@ -1,4 +1,4 @@
-use soroban_sdk::{contracttype, contracterror, Address, Symbol};
+use soroban_sdk::{contracterror, contracttype, Address, Symbol};
 
 /// Error codes for the Nestera savings contract
 #[contracterror]

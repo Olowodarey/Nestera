@@ -1,12 +1,10 @@
 #![no_std]
 #![allow(non_snake_case)]
-use soroban_sdk::{contract, contractimpl, Address, Env};
-
 mod storage_types;
 
 use soroban_sdk::{
-    contract, contractimpl, panic_with_error, symbol_short, xdr::ToXdr, Address, Bytes, BytesN, Env,
-    Symbol, Vec,
+    contract, contractimpl, panic_with_error, symbol_short, xdr::ToXdr, Address, Bytes, BytesN,
+    Env, Symbol, Vec,
 };
 pub use storage_types::{DataKey, MintPayload, PlanType, SavingsPlan, User};
 
@@ -47,6 +45,7 @@ impl NesteraContract {
     ///
     /// # Panics
     /// Panics if the contract has already been initialized.
+    #[allow(deprecated)]
     pub fn initialize(env: Env, admin_public_key: BytesN<32>) {
         // Check if already initialized
         if env.storage().instance().has(&DataKey::Initialized) {
@@ -125,6 +124,7 @@ impl NesteraContract {
     /// # Panics
     /// * Panics if signature verification fails
     /// * Panics if the signature has expired
+    #[allow(deprecated)]
     pub fn mint(env: Env, payload: MintPayload, signature: BytesN<64>) -> i128 {
         // Verify the signature first - this is the security checkpoint
         Self::verify_signature(env.clone(), payload.clone(), signature);
@@ -179,6 +179,7 @@ impl NesteraContract {
         env.storage().instance().has(&DataKey::Initialized)
     }
 
+    #[allow(deprecated)]
     pub fn create_savings_plan(
         env: Env,
         user: Address,
@@ -208,10 +209,13 @@ impl NesteraContract {
             last_withdraw: 0,
             interest_rate: 500, // Default 5%
             is_completed: false,
+            is_withdrawn: false,
         };
 
         // Store user data
-        env.storage().persistent().set(&DataKey::User(user.clone()), &user_data);
+        env.storage()
+            .persistent()
+            .set(&DataKey::User(user.clone()), &user_data);
 
         // Store plan data
         env.storage()

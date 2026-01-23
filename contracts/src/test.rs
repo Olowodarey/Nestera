@@ -4,7 +4,7 @@ extern crate std;
 use crate::{MintPayload, NesteraContract, NesteraContractClient, PlanType, SavingsPlan, User};
 use ed25519_dalek::{Signer, SigningKey};
 use soroban_sdk::testutils::{Address as _, Ledger, LedgerInfo};
-use soroban_sdk::{xdr::ToXdr, Address, Bytes, BytesN, Env, Vec, symbol_short};
+use soroban_sdk::{symbol_short, xdr::ToXdr, Address, Bytes, BytesN, Env, Vec};
 
 /// Helper function to create a test environment and contract client
 fn setup_test_env() -> (Env, NesteraContractClient<'static>) {
@@ -586,16 +586,16 @@ fn test_group_savings_plan() {
 fn test_create_savings_plan() {
     let (env, client) = setup_test_env();
     let (_, admin_public_key) = generate_keypair(&env);
-    
+
     client.initialize(&admin_public_key);
-    
+
     let user = Address::generate(&env);
     let plan_type = PlanType::Flexi;
     let initial_deposit = 1000_i128;
-    
+
     let plan_id = client.create_savings_plan(&user, &plan_type, &initial_deposit);
     assert_eq!(plan_id, 1);
-    
+
     let plan = client.get_savings_plan(&user, &plan_id).unwrap();
     assert_eq!(plan.plan_id, plan_id);
     assert_eq!(plan.plan_type, plan_type);
@@ -606,18 +606,18 @@ fn test_create_savings_plan() {
 fn test_get_user_savings_plans() {
     let (env, client) = setup_test_env();
     let (_, admin_public_key) = generate_keypair(&env);
-    
+
     client.initialize(&admin_public_key);
-    
+
     let user = Address::generate(&env);
-    
+
     // Create multiple plans
     let plan1_id = client.create_savings_plan(&user, &PlanType::Flexi, &1000_i128);
     let plan2_id = client.create_savings_plan(&user, &PlanType::Lock(2000000), &2000_i128);
-    
+
     let plans = client.get_user_savings_plans(&user);
     assert_eq!(plans.len(), 2);
-    
+
     // Verify plans are returned correctly
     let mut plan_ids = std::vec::Vec::new();
     for p in plans.iter() {
@@ -631,17 +631,17 @@ fn test_get_user_savings_plans() {
 fn test_get_user() {
     let (env, client) = setup_test_env();
     let (_, admin_public_key) = generate_keypair(&env);
-    
+
     client.initialize(&admin_public_key);
-    
+
     let user = Address::generate(&env);
-    
+
     // User should not exist initially
     assert!(client.get_user(&user).is_none());
-    
+
     // Create a savings plan
     client.create_savings_plan(&user, &PlanType::Flexi, &1000_i128);
-    
+
     // User should now exist
     let user_data = client.get_user(&user).unwrap();
     assert_eq!(user_data.total_balance, 1000_i128);
