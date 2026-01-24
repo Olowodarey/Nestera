@@ -282,6 +282,16 @@ impl NesteraContract {
     pub fn withdraw_flexi(env: Env, user: Address, amount: i128) -> Result<(), SavingsError> {
         flexi::flexi_withdraw(env, user, amount)
     }
+
+  /// VIEW FUNCTION
+    pub fn get_flexi_balance(env: Env, user: Address) -> i128 {
+        flexi::get_flexi_balance(&env, user).unwrap()
+    }
+
+    /// VIEW FUNCTION
+    pub fn has_flexi_balance(env: Env, user: Address) -> bool {
+        flexi::has_flexi_balance(&env, user)
+    }
 }
 
 #[cfg(test)]

@@ -70,3 +70,37 @@ pub fn flexi_withdraw(env: Env, user: Address, amount: i128) -> Result<(), Savin
 
     Ok(())
 }
+/// Returns the user's Flexi Save balance.
+/// This is a read-only (view) function.
+pub fn get_flexi_balance(env: &Env, user: Address) -> Result<i128, SavingsError> {
+    // 1. Ensure user exists
+    let user_key = DataKey::User(user.clone());
+    let _user: User = env
+        .storage()
+        .persistent()
+        .get(&user_key)
+        .ok_or(SavingsError::UserNotFound)?;
+
+    // 2. Read flexi balance (default to 0)
+    let flexi_key = DataKey::FlexiBalance(user);
+    let balance = env
+        .storage()
+        .persistent()
+        .get(&flexi_key)
+        .unwrap_or(0i128);
+
+    Ok(balance)
+}
+
+/// Returns true if the user has a non-zero Flexi Save balance.
+/// This function does not mutate storage.
+pub fn has_flexi_balance(env: &Env, user: Address) -> bool {
+    let flexi_key = DataKey::FlexiBalance(user);
+    let balance = env
+        .storage()
+        .persistent()
+        .get(&flexi_key)
+        .unwrap_or(0i128);
+
+    balance > 0
+}

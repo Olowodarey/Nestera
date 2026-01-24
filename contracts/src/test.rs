@@ -2,11 +2,13 @@
 extern crate std;
 
 use crate::{
-    MintPayload, NesteraContract, NesteraContractClient, PlanType, SavingsError, SavingsPlan, User,
+    MintPayload, NesteraContract, NesteraContractClient, PlanType, SavingsError, SavingsPlan, User, DataKey,flexi
 };
 use ed25519_dalek::{Signer, SigningKey};
 use soroban_sdk::testutils::{Address as _, Ledger, LedgerInfo};
 use soroban_sdk::{symbol_short, xdr::ToXdr, Address, Bytes, BytesN, Env};
+// use std::format;
+
 
 /// Helper function to create a test environment and contract client
 fn setup_test_env() -> (Env, NesteraContractClient<'static>) {
@@ -32,6 +34,22 @@ fn generate_keypair(env: &Env) -> (SigningKey, BytesN<32>) {
 
     (signing_key, public_key_bytes)
 }
+
+
+fn test_address(id: u8) -> Address {
+    let env = Env::default();
+
+    // create a 32-byte array for the test
+    let mut b = [0u8; 32];
+    b[0] = id; // just make each test address unique
+
+    // convert BytesN to Bytes
+    let bytes = Bytes::from_array(&env, &b);
+
+    // create Address from Bytes (no Env argument!)
+    Address::from_string_bytes(&bytes)
+}
+
 
 /// Generate a second keypair (attacker) for testing wrong signer scenarios
 fn generate_attacker_keypair(env: &Env) -> (SigningKey, BytesN<32>) {
@@ -817,3 +835,60 @@ fn test_flexi_invalid_amount() {
     let result = client.try_deposit_flexi(&user, &0);
     assert_eq!(result, Err(Ok(SavingsError::InvalidAmount)));
 }
+
+
+
+// #[test]
+// fn test_get_flexi_balance_user_not_found() {
+//     let env = Env::default();
+//     let user = test_address(2);
+
+//     // User not initialized
+//     assert_eq!(
+//         flexi::get_flexi_balance(&env, user.clone()),
+//         Err(SavingsError::UserNotFound)
+//     );
+
+//     // has_flexi_balance returns false for missing user balance
+//     assert_eq!(flexi::has_flexi_balance(&env, user.clone()), false);
+// }
+
+#[test]
+fn test_get_flexi_balance() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(NesteraContract, ());
+    let client = NesteraContractClient::new(&env, &contract_id);
+
+    let user = Address::generate(&env);
+
+    // 👇 REQUIRED: initialize user first
+    client.initialize_user(&user);
+
+    // then deposit
+    client.deposit_flexi(&user, &1000);
+
+    // view function
+    let balance = client.get_flexi_balance(&user);
+
+    assert_eq!(balance, 1000);
+}
+
+
+#[test]
+fn test_get_flexi_balance_user_not_found() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+let contract_id = env.register(NesteraContract, ());
+
+
+    let client = NesteraContractClient::new(&env, &contract_id);
+
+    let user = Address::generate(&env);
+
+    let result = client.try_get_flexi_balance(&user);
+    assert!(result.is_err());
+}
+
