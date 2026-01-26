@@ -433,4 +433,37 @@ mod tests {
         let goal_id = client.create_goal_save(&user1, &goal_name, &target, &initial);
         client.break_goal_save(&user2, &goal_id);
     }
+
+    #[test]
+    #[should_panic(expected = "Error(Contract, #2)")]
+    fn test_create_goal_save_invalid_target_amount() {
+        let (env, client) = setup_test_env();
+        let user = Address::generate(&env);
+
+        env.mock_all_auths();
+        client.initialize_user(&user);
+
+        let goal_name = Symbol::new(&env, "invalid");
+        let target = 0i128;
+        let initial = 100i128;
+
+        client.create_goal_save(&user, &goal_name, &target, &initial);
+    }
+
+    #[test]
+    #[should_panic(expected = "Error(Contract, #3)")]
+    fn test_create_goal_save_user_not_found() {
+        let (env, client) = setup_test_env();
+        let user = Address::generate(&env);
+
+        env.mock_all_auths();
+
+
+        let goal_name = Symbol::new(&env, "nouser");
+        let target = 5000i128;
+        let initial = 1000i128;
+
+     
+        client.create_goal_save(&user, &goal_name, &target, &initial);
+    }
 }
