@@ -5,6 +5,7 @@ use soroban_sdk::{
     Env, String, Symbol, Vec,
 };
 
+mod autosave;
 mod errors;
 mod flexi;
 mod goal;
@@ -16,8 +17,8 @@ mod views;
 
 pub use crate::errors::SavingsError;
 pub use crate::storage_types::{
-    DataKey, GoalSave, GoalSaveView, GroupSave, GroupSaveView, LockSave, LockSaveView, MintPayload,
-    PlanType, SavingsPlan, User,
+    AutoSave, DataKey, GoalSave, GoalSaveView, GroupSave, GroupSaveView, LockSave, LockSaveView,
+    MintPayload, PlanType, SavingsPlan, User,
 };
 
 /// Custom error codes for the contract administration
@@ -347,6 +348,39 @@ impl NesteraContract {
             .persistent()
             .get(&DataKey::Paused)
             .unwrap_or(false)
+    }
+
+    // ========== AutoSave Functions ==========
+
+    /// Creates a new AutoSave schedule for recurring Flexi deposits
+    pub fn create_autosave(
+        env: Env,
+        user: Address,
+        amount: i128,
+        interval_seconds: u64,
+        start_time: u64,
+    ) -> Result<u64, SavingsError> {
+        autosave::create_autosave(&env, user, amount, interval_seconds, start_time)
+    }
+
+    /// Executes an AutoSave schedule if it's due
+    pub fn execute_autosave(env: Env, schedule_id: u64) -> Result<(), SavingsError> {
+        autosave::execute_autosave(&env, schedule_id)
+    }
+
+    /// Cancels an AutoSave schedule
+    pub fn cancel_autosave(env: Env, user: Address, schedule_id: u64) -> Result<(), SavingsError> {
+        autosave::cancel_autosave(&env, user, schedule_id)
+    }
+
+    /// Gets an AutoSave schedule by ID
+    pub fn get_autosave(env: Env, schedule_id: u64) -> Option<AutoSave> {
+        autosave::get_autosave(&env, schedule_id)
+    }
+
+    /// Gets all AutoSave schedule IDs for a user
+    pub fn get_user_autosaves(env: Env, user: Address) -> Vec<u64> {
+        autosave::get_user_autosaves(&env, &user)
     }
 }
 

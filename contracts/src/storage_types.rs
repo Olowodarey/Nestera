@@ -104,6 +104,18 @@ pub struct GoalSave {
     pub is_withdrawn: bool,
 }
 
+/// Represents an automated recurring deposit schedule for Flexi Save
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AutoSave {
+    pub id: u64,
+    pub user: Address,
+    pub amount: i128,
+    pub interval_seconds: u64,
+    pub next_execution_time: u64,
+    pub is_active: bool,
+}
+
 /// Storage keys for the contract's persistent data
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -146,6 +158,12 @@ pub enum DataKey {
     GroupMemberContribution(u64, Address),
     /// Maps group_id to list of member addresses
     GroupMembers(u64),
+    /// Maps schedule ID to AutoSave struct
+    AutoSave(u64),
+    /// Maps user to a list of their AutoSave schedule IDs
+    UserAutoSaves(Address),
+    /// Stores the next auto-incrementing AutoSave schedule ID
+    NextAutoSaveId,
 }
 
 /// Payload structure that the admin signs off-chain
