@@ -1,6 +1,6 @@
 use crate::storage_types::DataKey;
 use crate::SavingsError;
-use soroban_sdk::{panic_with_error, Env};
+use soroban_sdk::Env;
 
 // --- Admin Setters ---
 

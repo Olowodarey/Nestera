@@ -149,3 +149,31 @@ fn unpause_restores_write_paths() {
 
     assert!(client.try_initialize_user(&user).is_ok());
 }
+
+#[test]
+fn admin_can_set_early_break_fee_and_recipient() {
+    let (env, client, _admin) = setup();
+    let treasury = Address::generate(&env);
+
+    env.mock_all_auths();
+
+    assert!(client.try_set_fee_recipient(&treasury).is_ok());
+    assert_eq!(client.get_fee_recipient().unwrap(), treasury);
+
+    assert!(client.try_set_early_break_fee_bps(&500).is_ok());
+    assert_eq!(client.get_early_break_fee_bps(), 500);
+
+    let invalid = client.try_set_early_break_fee_bps(&10_001);
+    assert_savings_error(invalid.unwrap_err(), SavingsError::InvalidAmount);
+}
+
+#[test]
+fn non_admin_cannot_set_fee_config() {
+    let (env, client, _admin) = setup();
+    let treasury = Address::generate(&env);
+
+    env.mock_auths(&[]);
+
+    assert!(client.try_set_fee_recipient(&treasury).is_err());
+    assert!(client.try_set_early_break_fee_bps(&500).is_err());
+}

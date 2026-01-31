@@ -230,7 +230,7 @@ impl NesteraContract {
             .unwrap_or_else(|e| panic_with_error!(&env, e))
     }
 
-    pub fn break_goal_save(env: Env, user: Address, goal_id: u64) {
+    pub fn break_goal_save(env: Env, user: Address, goal_id: u64) -> i128 {
         ensure_not_paused(&env).unwrap_or_else(|e| panic_with_error!(&env, e));
         goal::break_goal_save(&env, user, goal_id).unwrap_or_else(|e| panic_with_error!(&env, e))
     }
@@ -335,6 +335,29 @@ impl NesteraContract {
         rates::set_lock_rate(&env, duration_days, rate)
     }
 
+    pub fn set_early_break_fee_bps(env: Env, bps: u32) -> Result<(), SavingsError> {
+        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        admin.require_auth();
+        if bps > 10_000 {
+            return Err(SavingsError::InvalidAmount);
+        }
+        env.storage()
+            .instance()
+            .set(&DataKey::EarlyBreakFeeBps, &bps);
+        env.events().publish((symbol_short!("set_brk"),), bps);
+        Ok(())
+    }
+
+    pub fn set_fee_recipient(env: Env, recipient: Address) -> Result<(), SavingsError> {
+        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        admin.require_auth();
+        env.storage()
+            .instance()
+            .set(&DataKey::FeeRecipient, &recipient);
+        env.events().publish((symbol_short!("set_fee"),), recipient);
+        Ok(())
+    }
+
     pub fn pause(env: Env, admin: Address) -> Result<(), SavingsError> {
         admin.require_auth();
         let stored_admin: Option<Address> = env.storage().instance().get(&DataKey::Admin);
@@ -391,6 +414,24 @@ impl NesteraContract {
 
     pub fn get_lock_rate(env: Env, duration_days: u64) -> Result<i128, SavingsError> {
         rates::get_lock_rate(&env, duration_days)
+    }
+
+    pub fn get_early_break_fee_bps(env: Env) -> u32 {
+        env.storage()
+            .instance()
+            .get(&DataKey::EarlyBreakFeeBps)
+            .unwrap_or(0)
+    }
+
+    pub fn get_fee_recipient(env: Env) -> Option<Address> {
+        env.storage().instance().get(&DataKey::FeeRecipient)
+    }
+
+    pub fn get_protocol_fee_balance(env: Env, recipient: Address) -> i128 {
+        env.storage()
+            .persistent()
+            .get(&DataKey::TotalBalance(recipient))
+            .unwrap_or(0)
     }
 
     // ========== AutoSave Functions ==========

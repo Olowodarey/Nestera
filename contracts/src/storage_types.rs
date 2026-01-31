@@ -131,6 +131,10 @@ pub enum DataKey {
     WithdrawalFee,
     /// Protocol fee configuration
     PlatformFee,
+    /// Early break fee (basis points) for goal saves
+    EarlyBreakFeeBps,
+    /// Fee recipient for protocol/treasury fees
+    FeeRecipient,
     User(Address),
     /// Maps a (user address, plan_id) tuple to a SavingsPlan
     SavingsPlan(Address, u64),

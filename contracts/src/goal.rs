@@ -1,4 +1,4 @@
-use soroban_sdk::{Address, Env, Vec};
+use soroban_sdk::{symbol_short, Address, Env, Vec};
 
 use crate::ensure_not_paused;
 use crate::errors::SavingsError;
@@ -135,7 +135,7 @@ pub fn withdraw_completed_goal_save(
     Ok(goal_save.current_amount)
 }
 
-pub fn break_goal_save(env: &Env, user: Address, goal_id: u64) -> Result<(), SavingsError> {
+pub fn break_goal_save(env: &Env, user: Address, goal_id: u64) -> Result<i128, SavingsError> {
     ensure_not_paused(env)?;
     user.require_auth();
 
@@ -157,6 +157,31 @@ pub fn break_goal_save(env: &Env, user: Address, goal_id: u64) -> Result<(), Sav
         return Err(SavingsError::PlanCompleted);
     }
 
+    let fee_bps: u32 = env
+        .storage()
+        .instance()
+        .get(&DataKey::EarlyBreakFeeBps)
+        .unwrap_or(0);
+
+    if fee_bps > 10_000 {
+        return Err(SavingsError::InvalidAmount);
+    }
+
+    let fee_amount = if fee_bps == 0 {
+        0
+    } else {
+        goal_save
+            .current_amount
+            .checked_mul(fee_bps as i128)
+            .ok_or(SavingsError::Overflow)?
+            / 10_000
+    };
+
+    let net_amount = goal_save
+        .current_amount
+        .checked_sub(fee_amount)
+        .ok_or(SavingsError::Underflow)?;
+
     goal_save.is_withdrawn = true;
 
     env.storage()
@@ -167,14 +192,42 @@ pub fn break_goal_save(env: &Env, user: Address, goal_id: u64) -> Result<(), Sav
     if let Some(mut user_data) = env.storage().persistent().get::<DataKey, User>(&user_key) {
         user_data.total_balance = user_data
             .total_balance
-            .checked_add(goal_save.current_amount)
+            .checked_add(net_amount)
             .ok_or(SavingsError::Overflow)?;
         env.storage().persistent().set(&user_key, &user_data);
     }
 
+    if fee_amount > 0 {
+        if let Some(fee_recipient) = env
+            .storage()
+            .instance()
+            .get::<DataKey, Address>(&DataKey::FeeRecipient)
+        {
+            let fee_key = DataKey::TotalBalance(fee_recipient.clone());
+            let current_fee_balance = env
+                .storage()
+                .persistent()
+                .get::<DataKey, i128>(&fee_key)
+                .unwrap_or(0i128);
+            let new_fee_balance = current_fee_balance
+                .checked_add(fee_amount)
+                .ok_or(SavingsError::Overflow)?;
+            env.storage().persistent().set(&fee_key, &new_fee_balance);
+            env.events().publish(
+                (symbol_short!("brk_fee"), fee_recipient, goal_id),
+                fee_amount,
+            );
+        }
+    }
+
+    env.events().publish(
+        (symbol_short!("goal_brk"), user.clone(), goal_id),
+        net_amount,
+    );
+
     remove_goal_from_user(env, &user, goal_id);
 
-    Ok(())
+    Ok(net_amount)
 }
 
 pub fn get_goal_save(env: &Env, goal_id: u64) -> Option<GoalSave> {
@@ -237,6 +290,19 @@ mod tests {
         let contract_id = env.register(NesteraContract, ());
         let client = NesteraContractClient::new(&env, &contract_id);
         (env, client)
+    }
+
+    fn setup_admin_env() -> (Env, NesteraContractClient<'static>, Address) {
+        let env = Env::default();
+        let contract_id = env.register(NesteraContract, ());
+        let client = NesteraContractClient::new(&env, &contract_id);
+        let admin = Address::generate(&env);
+        let admin_pk = soroban_sdk::BytesN::from_array(&env, &[1u8; 32]);
+
+        env.mock_all_auths();
+        client.initialize(&admin, &admin_pk);
+
+        (env, client, admin)
     }
 
     #[test]
@@ -394,7 +460,8 @@ mod tests {
         let initial = 2000i128;
 
         let goal_id = client.create_goal_save(&user, &goal_name, &target, &initial);
-        client.break_goal_save(&user, &goal_id);
+        let net_amount = client.break_goal_save(&user, &goal_id);
+        assert_eq!(net_amount, initial);
 
         let goal_save = client.get_goal_save_detail(&goal_id);
         assert!(goal_save.is_withdrawn);
@@ -418,6 +485,51 @@ mod tests {
 
         let goal_id = client.create_goal_save(&user, &goal_name, &target, &initial);
         client.break_goal_save(&user, &goal_id);
+    }
+
+    #[test]
+    fn test_break_goal_save_applies_fee_and_routes() {
+        let (env, client, _admin) = setup_admin_env();
+        let user = Address::generate(&env);
+        let treasury = Address::generate(&env);
+
+        env.mock_all_auths();
+        client.initialize_user(&user);
+        assert!(client.try_set_fee_recipient(&treasury).is_ok());
+        assert!(client.try_set_early_break_fee_bps(&500).is_ok()); // 5%
+
+        let goal_name = Symbol::new(&env, "emergency");
+        let target = 10_000i128;
+        let initial = 2_000i128;
+
+        let goal_id = client.create_goal_save(&user, &goal_name, &target, &initial);
+        let net_amount = client.break_goal_save(&user, &goal_id);
+
+        assert_eq!(net_amount, 1_900);
+        assert_eq!(client.get_protocol_fee_balance(&treasury), 100);
+    }
+
+    #[test]
+    fn test_break_goal_save_fee_rounds_down() {
+        let (env, client, _admin) = setup_admin_env();
+        let user = Address::generate(&env);
+        let treasury = Address::generate(&env);
+
+        env.mock_all_auths();
+        client.initialize_user(&user);
+        assert!(client.try_set_fee_recipient(&treasury).is_ok());
+        assert!(client.try_set_early_break_fee_bps(&125).is_ok()); // 1.25%
+
+        let goal_name = Symbol::new(&env, "rounding");
+        let target = 10_000i128;
+        let initial = 3_333i128;
+
+        let goal_id = client.create_goal_save(&user, &goal_name, &target, &initial);
+        let net_amount = client.break_goal_save(&user, &goal_id);
+
+        // fee = floor(3333 * 125 / 10000) = 41
+        assert_eq!(net_amount, 3_292);
+        assert_eq!(client.get_protocol_fee_balance(&treasury), 41);
     }
 
     #[test]
