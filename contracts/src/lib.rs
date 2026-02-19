@@ -6,6 +6,7 @@ use soroban_sdk::{
 };
 
 mod autosave;
+mod config;
 mod errors;
 mod flexi;
 mod goal;
@@ -17,6 +18,7 @@ mod users;
 mod rates;
 mod views;
 
+pub use crate::config::Config;
 pub use crate::errors::SavingsError;
 pub use crate::storage_types::{
     AutoSave, DataKey, GoalSave, GoalSaveView, GroupSave, GroupSaveView, LockSave, LockSaveView,
@@ -43,16 +45,7 @@ impl From<ContractError> for soroban_sdk::Error {
 pub struct NesteraContract;
 
 pub(crate) fn ensure_not_paused(env: &Env) -> Result<(), SavingsError> {
-    let is_paused: bool = env
-        .storage()
-        .persistent()
-        .get(&DataKey::Paused)
-        .unwrap_or(false);
-    if is_paused {
-        Err(SavingsError::ContractPaused)
-    } else {
-        Ok(())
-    }
+    config::require_not_paused(env)
 }
 
 #[contractimpl]
@@ -449,16 +442,19 @@ impl NesteraContract {
         interval_seconds: u64,
         start_time: u64,
     ) -> Result<u64, SavingsError> {
+        ensure_not_paused(&env)?;
         autosave::create_autosave(&env, user, amount, interval_seconds, start_time)
     }
 
     /// Executes an AutoSave schedule if it's due
     pub fn execute_autosave(env: Env, schedule_id: u64) -> Result<(), SavingsError> {
+        ensure_not_paused(&env)?;
         autosave::execute_autosave(&env, schedule_id)
     }
 
     /// Cancels an AutoSave schedule
     pub fn cancel_autosave(env: Env, user: Address, schedule_id: u64) -> Result<(), SavingsError> {
+        ensure_not_paused(&env)?;
         autosave::cancel_autosave(&env, user, schedule_id)
     }
 
@@ -471,12 +467,58 @@ impl NesteraContract {
     pub fn get_user_autosaves(env: Env, user: Address) -> Vec<u64> {
         autosave::get_user_autosaves(&env, &user)
     }
+
+    // ========== Config Functions ==========
+
+    /// Initializes the protocol configuration. Can only be called once.
+    pub fn initialize_config(
+        env: Env,
+        admin: Address,
+        treasury: Address,
+        protocol_fee_bps: u32,
+    ) -> Result<(), SavingsError> {
+        config::initialize_config(&env, admin, treasury, protocol_fee_bps)
+    }
+
+    /// Returns the current global configuration
+    pub fn get_config(env: Env) -> Result<Config, SavingsError> {
+        config::get_config(&env)
+    }
+
+    /// Updates the treasury address (admin only)
+    pub fn set_treasury(
+        env: Env,
+        admin: Address,
+        new_treasury: Address,
+    ) -> Result<(), SavingsError> {
+        config::set_treasury(&env, admin, new_treasury)
+    }
+
+    /// Updates the protocol fee in basis points (admin only)
+    pub fn set_protocol_fee(
+        env: Env,
+        admin: Address,
+        new_fee_bps: u32,
+    ) -> Result<(), SavingsError> {
+        config::set_protocol_fee(&env, admin, new_fee_bps)
+    }
+
+    /// Pauses the contract via config module (admin only)
+    pub fn pause_contract(env: Env, admin: Address) -> Result<(), SavingsError> {
+        config::pause_contract(&env, admin)
+    }
+
+    /// Unpauses the contract via config module (admin only)
+    pub fn unpause_contract(env: Env, admin: Address) -> Result<(), SavingsError> {
+        config::unpause_contract(&env, admin)
+    }
 }
 
 #[cfg(test)]
 mod admin_tests;
 #[cfg(test)]
-mod rates_test;
+mod config_tests;
 #[cfg(test)]
+mod rates_test;
 #[cfg(test)]
 mod test;
