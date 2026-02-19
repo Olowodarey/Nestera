@@ -457,6 +457,12 @@ impl NesteraContract {
         autosave::execute_autosave(&env, schedule_id)
     }
 
+    /// Batch-executes multiple due AutoSave schedules in a single call.
+    /// Returns a Vec<bool> indicating success (true) or skip/failure (false) per schedule.
+    pub fn execute_due_autosaves(env: Env, schedule_ids: Vec<u64>) -> Vec<bool> {
+        autosave::execute_due_autosaves(&env, schedule_ids)
+    }
+
     /// Cancels an AutoSave schedule
     pub fn cancel_autosave(env: Env, user: Address, schedule_id: u64) -> Result<(), SavingsError> {
         autosave::cancel_autosave(&env, user, schedule_id)
