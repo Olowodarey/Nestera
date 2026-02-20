@@ -11,7 +11,8 @@ pub fn assert_non_negative(amount: i128) -> Result<(), SavingsError> {
 
 /// Validates that fee basis points are within the 0-100% range.
 pub fn assert_valid_fee(fee_bps: u32) -> Result<(), SavingsError> {
-    if fee_bps > 10000 {
+    if fee_bps > 10_000 {
+        // Change this from InvalidAmount to InvalidFeeBps
         return Err(SavingsError::InvalidFeeBps);
     }
     Ok(())
