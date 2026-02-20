@@ -1,5 +1,7 @@
 pub mod config;
+pub mod storage;
 pub mod storage_types;
 
-// Re-export the struct so it's easier to access as rewards::RewardsConfig
-pub use storage_types::RewardsConfig;
+// Re-exporting these makes them accessible as crate::rewards::UserRewards
+pub use config::*;
+pub use storage_types::{RewardsDataKey, UserRewards}; // Optional: re-exports config functions

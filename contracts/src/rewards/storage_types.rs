@@ -1,4 +1,5 @@
-use soroban_sdk::contracttype;
+use crate::errors::SavingsError;
+use soroban_sdk::{contracttype, Address, Env};
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -11,6 +12,16 @@ pub struct RewardsConfig {
 }
 
 #[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct UserRewards {
+    pub total_points: u128,         // Total spendable/accumulated points
+    pub lifetime_deposited: i128,   // Total volume for tier calculation
+    pub current_streak: u32,        // Number of consecutive periods saved
+    pub last_action_timestamp: u64, // To check if streak is broken
+}
+
+#[contracttype]
 pub enum RewardsDataKey {
     Config,
+    UserLedger(Address),
 }
