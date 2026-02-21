@@ -29,6 +29,8 @@ pub fn get_user_rewards(env: &Env, user: Address) -> UserRewards {
             lifetime_deposited: 0,
             current_streak: 0,
             last_action_timestamp: 0,
+            daily_points_earned: 0,
+            last_reward_day: 0,
         }
     }
 }
@@ -52,6 +54,8 @@ pub fn initialize_user_rewards(env: &Env, user: Address) -> Result<(), SavingsEr
         lifetime_deposited: 0,
         current_streak: 0,
         last_action_timestamp: env.ledger().timestamp(),
+        daily_points_earned: 0,
+        last_reward_day: env.ledger().timestamp() / 86400,
     };
 
     // Now this function can find save_user_rewards because they are in the same file
@@ -123,33 +127,74 @@ pub fn award_deposit_points(env: &Env, user: Address, amount: i128) -> Result<()
         Ok(config) if config.enabled => config,
         _ => return Ok(()),
     };
+    
+    // ANTI-FARMING: Check minimum deposit size
+    if amount < config.min_deposit_for_rewards {
+        return Ok(()); // No rewards for micro-deposits
+    }
+    
+    let mut user_rewards = get_user_rewards(env, user.clone());
+    let now = env.ledger().timestamp();
+    let current_day = now / 86400;
+    
+    // ANTI-FARMING: Check action cooldown (skip for first ever action)
+    let is_first_action = user_rewards.last_action_timestamp == 0 && user_rewards.current_streak == 0;
+    if !is_first_action && now.saturating_sub(user_rewards.last_action_timestamp) < config.action_cooldown_seconds {
+        return Ok(()); // Too soon after last action
+    }
+    
+    // ANTI-FARMING: Reset daily counter if new day
+    if current_day > user_rewards.last_reward_day {
+        user_rewards.daily_points_earned = 0;
+        user_rewards.last_reward_day = current_day;
+    }
+    
+    // ANTI-FARMING: Check daily points cap
+    if user_rewards.daily_points_earned >= config.max_daily_points {
+        return Ok(()); // Daily limit reached
+    }
+    
     // 2. Update streak first (time-window boundary handling)
     let streak = update_streak(env, user.clone())?;
-    let mut user_rewards = get_user_rewards(env, user.clone());
+    user_rewards = get_user_rewards(env, user.clone()); // Refresh after streak update
 
     // 3. Calculate Base Points
-    // Using checked_mul to prevent overflow during calculation
     let base_points = (amount as u128)
         .checked_mul(config.points_per_token as u128)
         .ok_or(SavingsError::Overflow)?;
 
-    // 4. Optional streak bonus once threshold is reached
+    // 4. Optional streak bonus with max multiplier cap
     let streak_bonus_points = if streak >= STREAK_BONUS_THRESHOLD && config.streak_bonus_bps > 0 {
+        let effective_bonus_bps = config.streak_bonus_bps.min(config.max_streak_multiplier);
         base_points
-            .checked_mul(config.streak_bonus_bps as u128)
+            .checked_mul(effective_bonus_bps as u128)
             .ok_or(SavingsError::Overflow)?
             / 10_000u128
     } else {
         0
     };
+    
     let total_points_awarded = base_points
         .checked_add(streak_bonus_points)
         .ok_or(SavingsError::Overflow)?;
+    
+    // ANTI-FARMING: Cap to remaining daily allowance
+    let remaining_daily = config.max_daily_points.saturating_sub(user_rewards.daily_points_earned);
+    let capped_points = total_points_awarded.min(remaining_daily);
+    
+    if capped_points == 0 {
+        return Ok(()); // Nothing to award after capping
+    }
 
-    // 4. Update State
+    // 5. Update State
     user_rewards.total_points = user_rewards
         .total_points
-        .checked_add(total_points_awarded)
+        .checked_add(capped_points)
+        .ok_or(SavingsError::Overflow)?;
+    
+    user_rewards.daily_points_earned = user_rewards
+        .daily_points_earned
+        .checked_add(capped_points)
         .ok_or(SavingsError::Overflow)?;
 
     user_rewards.lifetime_deposited = user_rewards
@@ -157,7 +202,7 @@ pub fn award_deposit_points(env: &Env, user: Address, amount: i128) -> Result<()
         .checked_add(amount)
         .ok_or(SavingsError::Overflow)?;
 
-    // 5. Save and Emit Event
+    // 6. Save and Emit Event
     save_user_rewards(env, user.clone(), &user_rewards);
 
     env.events().publish(
@@ -166,17 +211,18 @@ pub fn award_deposit_points(env: &Env, user: Address, amount: i128) -> Result<()
             symbol_short!("awarded"),
             user.clone(),
         ),
-        total_points_awarded,
+        capped_points,
     );
 
-    if streak_bonus_points > 0 {
+    if streak_bonus_points > 0 && capped_points > base_points {
+        let actual_bonus = capped_points.saturating_sub(base_points);
         env.events().publish(
             (
                 Symbol::new(env, "BonusAwarded"),
                 user.clone(),
                 symbol_short!("streak"),
             ),
-            streak_bonus_points,
+            actual_bonus,
         );
     }
 
@@ -284,6 +330,10 @@ mod tests {
             long_lock_bonus_bps: 0,
             goal_completion_bonus: 0,
             enabled: true,
+            min_deposit_for_rewards: 0,
+            action_cooldown_seconds: 0,
+            max_daily_points: 1_000_000,
+            max_streak_multiplier: 10_000,
         }
     }
 

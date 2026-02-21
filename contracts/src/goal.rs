@@ -489,6 +489,10 @@ mod tests {
             long_lock_bonus_bps: 0,
             goal_completion_bonus: completion_bonus,
             enabled,
+            min_deposit_for_rewards: 0,
+            action_cooldown_seconds: 0,
+            max_daily_points: 1_000_000,
+            max_streak_multiplier: 10_000,
         };
         assert!(client.try_initialize_rewards_config(&config).is_ok());
     }

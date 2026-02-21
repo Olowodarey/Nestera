@@ -571,6 +571,45 @@ impl NesteraContract {
 
     // ========== Rewards Functions ==========
 
+    pub fn init_rewards_config(
+        env: Env,
+        admin: Address,
+        points_per_token: u32,
+        streak_bonus_bps: u32,
+        long_lock_bonus_bps: u32,
+        goal_completion_bonus: u32,
+        enabled: bool,
+        min_deposit_for_rewards: i128,
+        action_cooldown_seconds: u64,
+        max_daily_points: u128,
+        max_streak_multiplier: u32,
+    ) -> Result<(), SavingsError> {
+        let stored_admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(SavingsError::Unauthorized)?;
+        stored_admin.require_auth();
+        
+        if admin != stored_admin {
+            return Err(SavingsError::Unauthorized);
+        }
+        
+        let config = rewards::storage_types::RewardsConfig {
+            points_per_token,
+            streak_bonus_bps,
+            long_lock_bonus_bps,
+            goal_completion_bonus,
+            enabled,
+            min_deposit_for_rewards,
+            action_cooldown_seconds,
+            max_daily_points,
+            max_streak_multiplier,
+        };
+        
+        rewards::config::initialize_rewards_config(&env, config)
+    }
+
     pub fn initialize_rewards_config(
         env: Env,
         config: rewards::storage_types::RewardsConfig,
