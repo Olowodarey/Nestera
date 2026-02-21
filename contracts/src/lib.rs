@@ -668,6 +668,16 @@ impl NesteraContract {
         rewards::ranking::get_user_ranking_details(&env, &user)
     }
 
+    // ========== Points Redemption ==========
+
+    /// Redeem points for protocol benefits (fee discounts, boost multiplier, etc.)
+    /// Validates sufficient balance and deducts points safely
+    /// Emits PointsRedeemed event on success
+    pub fn redeem_points(env: Env, user: Address, amount: u128) -> Result<(), SavingsError> {
+        user.require_auth();
+        rewards::redemption::redeem_points(&env, user, amount)
+    }
+
     // ========== AutoSave Functions ==========
 
     /// Creates a new AutoSave schedule for recurring Flexi deposits

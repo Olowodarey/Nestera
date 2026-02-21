@@ -59,10 +59,10 @@ fn test_get_top_users_basic() {
     assert!(users.len() >= 4, "Need at least 4 users for test");
 
     // Give different amounts to users
-    client.deposit_flexi(&users.get(0).unwrap(), &1000); // 10,000 points
-    client.deposit_flexi(&users.get(1).unwrap(), &500); // 5,000 points
-    client.deposit_flexi(&users.get(2).unwrap(), &2000); // 20,000 points
-    client.deposit_flexi(&users.get(3).unwrap(), &1500); // 15,000 points
+    client.deposit_flexi(&users.get(0).unwrap().clone(), &1000); // 10,000 points
+    client.deposit_flexi(&users.get(1).unwrap().clone(), &500); // 5,000 points
+    client.deposit_flexi(&users.get(2).unwrap().clone(), &2000); // 20,000 points
+    client.deposit_flexi(&users.get(3).unwrap().clone(), &1500); // 15,000 points
 
     let top_users = client.get_top_users(&10);
     assert_eq!(top_users.len(), 4, "Should return 4 users with points");
@@ -125,10 +125,10 @@ fn test_get_user_rank_basic() {
     assert!(users.len() >= 4, "Need at least 4 users for test");
 
     // Give different amounts
-    client.deposit_flexi(&users.get(0).unwrap(), &1000); // 10,000 points - rank 3
-    client.deposit_flexi(&users.get(1).unwrap(), &500); // 5,000 points  - rank 4
-    client.deposit_flexi(&users.get(2).unwrap(), &2000); // 20,000 points - rank 1
-    client.deposit_flexi(&users.get(3).unwrap(), &1500); // 15,000 points - rank 2
+    client.deposit_flexi(&users.get(0).unwrap().clone(), &1000); // 10,000 points - rank 3
+    client.deposit_flexi(&users.get(1).unwrap().clone(), &500); // 5,000 points  - rank 4
+    client.deposit_flexi(&users.get(2).unwrap().clone(), &2000); // 20,000 points - rank 1
+    client.deposit_flexi(&users.get(3).unwrap().clone(), &1500); // 15,000 points - rank 2
 
     let rank0 = client.get_user_rank(&users.get(0).unwrap());
     let rank1 = client.get_user_rank(&users.get(1).unwrap());
@@ -205,8 +205,8 @@ fn test_ranking_updates_on_new_deposits() {
     assert!(users.len() >= 2, "Need at least 2 users for test");
 
     // Initial deposits
-    client.deposit_flexi(&users.get(0).unwrap(), &1000); // 10,000 points
-    client.deposit_flexi(&users.get(1).unwrap(), &500); // 5,000 points
+    client.deposit_flexi(&users.get(0).unwrap().clone(), &1000); // 10,000 points
+    client.deposit_flexi(&users.get(1).unwrap().clone(), &500); // 5,000 points
 
     let rank0_before = client.get_user_rank(&users.get(0).unwrap());
     let rank1_before = client.get_user_rank(&users.get(1).unwrap());

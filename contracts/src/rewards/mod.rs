@@ -1,5 +1,6 @@
 pub mod config;
 pub mod ranking;
+pub mod redemption;
 pub mod storage;
 pub mod storage_types;
 
