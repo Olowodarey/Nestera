@@ -1,8 +1,8 @@
-//! Rewards storage, streak logic, and bonus point calculations.
 use super::storage_types::{RewardsDataKey, UserRewards};
 use crate::errors::SavingsError;
 use crate::rewards::config::get_rewards_config;
-use soroban_sdk::{symbol_short, Address, Env, Symbol};
+use crate::rewards::events::{emit_bonus_awarded, emit_points_awarded, emit_streak_updated};
+use soroban_sdk::{Address, Env, Symbol};
 
 /// Duration threshold for long-lock bonus eligibility (in seconds).
 pub const LONG_LOCK_BONUS_THRESHOLD_SECS: u64 = 180 * 24 * 60 * 60;
@@ -113,7 +113,8 @@ pub fn update_streak(env: &Env, user: Address) -> Result<u32, SavingsError> {
         }
     };
     rewards.last_action_timestamp = now;
-    save_user_rewards(env, user, &rewards);
+    save_user_rewards(env, user.clone(), &rewards);
+    emit_streak_updated(env, user, rewards.current_streak);
     Ok(rewards.current_streak)
 }
 
@@ -213,25 +214,11 @@ pub fn award_deposit_points(env: &Env, user: Address, amount: i128) -> Result<()
     // Track user for ranking leaderboard
     crate::rewards::ranking::track_user_for_ranking(env, user.clone());
 
-    env.events().publish(
-        (
-            symbol_short!("rewards"),
-            symbol_short!("awarded"),
-            user.clone(),
-        ),
-        capped_points,
-    );
+    emit_points_awarded(env, user.clone(), capped_points);
 
     if streak_bonus_points > 0 && capped_points > base_points {
         let actual_bonus = capped_points.saturating_sub(base_points);
-        env.events().publish(
-            (
-                Symbol::new(env, "BonusAwarded"),
-                user.clone(),
-                symbol_short!("streak"),
-            ),
-            actual_bonus,
-        );
+        emit_bonus_awarded(env, user, actual_bonus, Symbol::new(env, "streak"));
     }
 
     Ok(())
@@ -270,14 +257,7 @@ pub fn award_long_lock_bonus(
     }
 
     add_points(env, user.clone(), bonus_points)?;
-    env.events().publish(
-        (
-            Symbol::new(env, "BonusAwarded"),
-            user,
-            symbol_short!("lock"),
-        ),
-        bonus_points,
-    );
+    emit_bonus_awarded(env, user, bonus_points, Symbol::new(env, "lock"));
     Ok(bonus_points)
 }
 
@@ -294,14 +274,7 @@ pub fn award_goal_completion_bonus(env: &Env, user: Address) -> Result<u128, Sav
 
     let bonus_points = config.goal_completion_bonus as u128;
     add_points(env, user.clone(), bonus_points)?;
-    env.events().publish(
-        (
-            Symbol::new(env, "BonusAwarded"),
-            user,
-            symbol_short!("goal"),
-        ),
-        bonus_points,
-    );
+    emit_bonus_awarded(env, user, bonus_points, Symbol::new(env, "goal"));
     Ok(bonus_points)
 }
 

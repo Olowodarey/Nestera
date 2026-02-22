@@ -1,8 +1,9 @@
 //! Points redemption functionality for protocol benefits.
 
 use crate::errors::SavingsError;
+use crate::rewards::events::emit_points_redeemed;
 use crate::rewards::storage::{get_user_rewards, save_user_rewards};
-use soroban_sdk::{symbol_short, Address, Env, Symbol};
+use soroban_sdk::{Address, Env};
 
 /// Redeem points for protocol benefits (fee discounts, boost multiplier, etc.)
 ///
@@ -43,8 +44,7 @@ pub fn redeem_points(env: &Env, user: Address, amount: u128) -> Result<(), Savin
     save_user_rewards(env, user.clone(), &rewards);
 
     // Emit redemption event
-    env.events()
-        .publish((Symbol::new(env, "PointsRedeemed"), user.clone()), amount);
+    emit_points_redeemed(env, user, amount);
 
     Ok(())
 }
