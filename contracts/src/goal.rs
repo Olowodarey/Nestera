@@ -92,6 +92,9 @@ pub fn create_goal_save(
     add_goal_to_user(env, &user, goal_id);
     increment_next_goal_id(env);
 
+    // Award deposit points
+    storage::award_deposit_points(env, user.clone(), initial_deposit)?;
+
     // Extend TTL for new goal save and user data
     ttl::extend_goal_ttl(env, goal_id);
     ttl::extend_user_plan_list_ttl(env, &DataKey::UserGoalSaves(user.clone()));
@@ -179,6 +182,9 @@ pub fn deposit_to_goal_save(
             );
         }
     }
+
+    // Award deposit points
+    storage::award_deposit_points(env, user.clone(), amount)?;
 
     Ok(())
 }
@@ -489,6 +495,10 @@ mod tests {
             long_lock_bonus_bps: 0,
             goal_completion_bonus: completion_bonus,
             enabled,
+            min_deposit_for_rewards: 0,
+            action_cooldown_seconds: 0,
+            max_daily_points: 1_000_000,
+            max_streak_multiplier: 10_000,
         };
         assert!(client.try_initialize_rewards_config(&config).is_ok());
     }
@@ -978,11 +988,13 @@ mod tests {
 
         client.deposit_to_goal_save(&user, &goal_id, &1_000);
         let rewards_after_completion = client.get_user_rewards(&user);
-        assert_eq!(rewards_after_completion.total_points, 250);
+        // Base points: (4000 + 1000) * 10 = 50000
+        // Completion bonus: 250
+        assert_eq!(rewards_after_completion.total_points, 50250);
 
         let _ = client.withdraw_completed_goal_save(&user, &goal_id);
         let rewards_after_withdraw = client.get_user_rewards(&user);
-        assert_eq!(rewards_after_withdraw.total_points, 250);
+        assert_eq!(rewards_after_withdraw.total_points, 50250);
     }
 
     #[test]
@@ -1000,7 +1012,8 @@ mod tests {
         assert!(!goal_save.is_completed);
 
         let rewards = client.get_user_rewards(&user);
-        assert_eq!(rewards.total_points, 0);
+        // Base points: 4999 * 10 = 49990
+        assert_eq!(rewards.total_points, 49990);
     }
 
     #[test]
@@ -1018,7 +1031,9 @@ mod tests {
         assert!(goal.is_completed);
 
         let rewards = client.get_user_rewards(&user);
-        assert_eq!(rewards.total_points, 250);
+        // Base points: 5000 * 10 = 50000
+        // Completion bonus: 250
+        assert_eq!(rewards.total_points, 50250);
     }
 
     #[test]
@@ -1051,6 +1066,7 @@ mod tests {
         let _ = client.break_goal_save(&user, &goal_id);
 
         let rewards = client.get_user_rewards(&user);
-        assert_eq!(rewards.total_points, 0);
+        // Base points: 2000 * 10 = 20000
+        assert_eq!(rewards.total_points, 20000);
     }
 }

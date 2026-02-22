@@ -452,6 +452,9 @@ pub fn contribute_to_group_save(
         env.storage().persistent().set(&plan_key, &plan);
     }
 
+    // Award deposit points
+    crate::rewards::storage::award_deposit_points(env, user.clone(), amount)?;
+
     // Extend TTL on contribution
     ttl::extend_group_ttl(env, group_id);
     ttl::extend_user_ttl(env, &user);

@@ -571,6 +571,45 @@ impl NesteraContract {
 
     // ========== Rewards Functions ==========
 
+    pub fn init_rewards_config(
+        env: Env,
+        admin: Address,
+        points_per_token: u32,
+        streak_bonus_bps: u32,
+        long_lock_bonus_bps: u32,
+        goal_completion_bonus: u32,
+        enabled: bool,
+        min_deposit_for_rewards: i128,
+        action_cooldown_seconds: u64,
+        max_daily_points: u128,
+        max_streak_multiplier: u32,
+    ) -> Result<(), SavingsError> {
+        let stored_admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(SavingsError::Unauthorized)?;
+        stored_admin.require_auth();
+
+        if admin != stored_admin {
+            return Err(SavingsError::Unauthorized);
+        }
+
+        let config = rewards::storage_types::RewardsConfig {
+            points_per_token,
+            streak_bonus_bps,
+            long_lock_bonus_bps,
+            goal_completion_bonus,
+            enabled,
+            min_deposit_for_rewards,
+            action_cooldown_seconds,
+            max_daily_points,
+            max_streak_multiplier,
+        };
+
+        rewards::config::initialize_rewards_config(&env, config)
+    }
+
     pub fn initialize_rewards_config(
         env: Env,
         config: rewards::storage_types::RewardsConfig,
@@ -605,6 +644,38 @@ impl NesteraContract {
     pub fn update_streak(env: Env, user: Address) -> Result<u32, SavingsError> {
         user.require_auth();
         rewards::storage::update_streak(&env, user)
+    }
+
+    // ========== Ranking Functions ==========
+
+    /// Gets the top N users by reward points
+    /// Read-only - no state mutation
+    pub fn get_top_users(env: Env, limit: u32) -> Vec<(Address, u128)> {
+        rewards::ranking::get_top_users(&env, limit)
+    }
+
+    /// Gets the rank of a specific user (1-indexed)
+    /// Returns 0 if user has no points or is not ranked
+    /// Read-only - no state mutation
+    pub fn get_user_rank(env: Env, user: Address) -> u32 {
+        rewards::ranking::get_user_rank(&env, &user)
+    }
+
+    /// Gets detailed ranking information for a user
+    /// Returns (rank, total_points, total_users) or None
+    /// Read-only - no state mutation
+    pub fn get_user_ranking_details(env: Env, user: Address) -> Option<(u32, u128, u32)> {
+        rewards::ranking::get_user_ranking_details(&env, &user)
+    }
+
+    // ========== Points Redemption ==========
+
+    /// Redeem points for protocol benefits (fee discounts, boost multiplier, etc.)
+    /// Validates sufficient balance and deducts points safely
+    /// Emits PointsRedeemed event on success
+    pub fn redeem_points(env: Env, user: Address, amount: u128) -> Result<(), SavingsError> {
+        user.require_auth();
+        rewards::redemption::redeem_points(&env, user, amount)
     }
 
     // ========== AutoSave Functions ==========
