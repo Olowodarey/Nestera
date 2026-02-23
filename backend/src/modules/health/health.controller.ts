@@ -1,10 +1,10 @@
-import { Controller, Get, UseInterceptors } from '@nestjs/common';
-import { CacheInterceptor } from '@nestjs/cache-manager';
+import { Controller, Get } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Health')
 @Controller('health')
 export class HealthController {
   @Get()
-  @UseInterceptors(CacheInterceptor)
   check() {
     return {
       status: 'ok',
