@@ -2,7 +2,8 @@
 
 use soroban_sdk::{
     symbol_short,
-    testutils::{Address as _, Events}, Address, BytesN, Env, IntoVal, Symbol,
+    testutils::{Address as _, Events},
+    Address, BytesN, Env, IntoVal, Symbol,
 };
 use Nestera::{
     rewards::{BonusAwarded, PointsAwarded, StreakUpdated},

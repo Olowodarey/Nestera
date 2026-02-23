@@ -3,7 +3,6 @@ use soroban_sdk::Env;
 #[cfg(test)]
 mod security_tests {
     use super::*;
-    
 
     #[test]
     fn test_overflow_protection() {

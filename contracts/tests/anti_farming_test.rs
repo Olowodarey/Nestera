@@ -1,8 +1,5 @@
 #![cfg(test)]
-use soroban_sdk::{
-    testutils::Address as _,
-    Address, BytesN, Env,
-};
+use soroban_sdk::{testutils::Address as _, Address, BytesN, Env};
 use Nestera::{NesteraContract, NesteraContractClient};
 
 fn create_test_env() -> (Env, NesteraContractClient<'static>, Address, Address) {

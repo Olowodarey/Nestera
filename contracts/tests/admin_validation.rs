@@ -3,7 +3,6 @@
 
 #[cfg(test)]
 mod admin_validation {
-    
 
     #[test]
     fn validate_admin_functions_exist() {

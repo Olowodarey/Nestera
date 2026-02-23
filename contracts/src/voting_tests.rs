@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod voting_tests {
-    
+
     use crate::rewards::storage_types::RewardsConfig;
     use crate::{NesteraContract, NesteraContractClient, PlanType};
     use soroban_sdk::{
