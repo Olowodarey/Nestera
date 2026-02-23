@@ -415,29 +415,25 @@ impl NesteraContract {
         Ok(())
     }
 
-    pub fn set_flexi_rate(env: Env, rate: i128) -> Result<(), SavingsError> {
-        let admin = env.storage().instance().get(&DataKey::Admin).unwrap();
-        let admin_address: Address = admin; // Type casting for clarity, though get returns generic
-        admin_address.require_auth();
-        rates::set_flexi_rate(&env, rate)
+    pub fn set_flexi_rate(env: Env, caller: Address, rate: i128) -> Result<(), SavingsError> {
+        rates::set_flexi_rate(&env, caller, rate)
     }
 
-    pub fn set_goal_rate(env: Env, rate: i128) -> Result<(), SavingsError> {
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        admin.require_auth();
-        rates::set_goal_rate(&env, rate)
+    pub fn set_goal_rate(env: Env, caller: Address, rate: i128) -> Result<(), SavingsError> {
+        rates::set_goal_rate(&env, caller, rate)
     }
 
-    pub fn set_group_rate(env: Env, rate: i128) -> Result<(), SavingsError> {
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        admin.require_auth();
-        rates::set_group_rate(&env, rate)
+    pub fn set_group_rate(env: Env, caller: Address, rate: i128) -> Result<(), SavingsError> {
+        rates::set_group_rate(&env, caller, rate)
     }
 
-    pub fn set_lock_rate(env: Env, duration_days: u64, rate: i128) -> Result<(), SavingsError> {
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
-        admin.require_auth();
-        rates::set_lock_rate(&env, duration_days, rate)
+    pub fn set_lock_rate(
+        env: Env,
+        caller: Address,
+        duration_days: u64,
+        rate: i128,
+    ) -> Result<(), SavingsError> {
+        rates::set_lock_rate(&env, caller, duration_days, rate)
     }
 
     pub fn set_early_break_fee_bps(env: Env, bps: u32) -> Result<(), SavingsError> {
@@ -474,39 +470,23 @@ impl NesteraContract {
         Ok(())
     }
 
-    pub fn pause(env: Env, admin: Address) -> Result<(), SavingsError> {
-        admin.require_auth();
-        let stored_admin: Option<Address> = env.storage().instance().get(&DataKey::Admin);
-
-        // Use .clone() here so 'admin' isn't moved
-        if stored_admin != Some(admin.clone()) {
-            return Err(SavingsError::Unauthorized);
-        }
+    pub fn pause(env: Env, caller: Address) -> Result<(), SavingsError> {
+        caller.require_auth();
+        governance::validate_admin_or_governance(&env, &caller)?;
 
         env.storage().persistent().set(&DataKey::Paused, &true);
-
-        // Extend TTL on config update
         ttl::extend_config_ttl(&env, &DataKey::Paused);
-
-        env.events().publish((symbol_short!("pause"), admin), ());
+        env.events().publish((symbol_short!("pause"), caller), ());
         Ok(())
     }
 
-    pub fn unpause(env: Env, admin: Address) -> Result<(), SavingsError> {
-        admin.require_auth();
-        let stored_admin: Option<Address> = env.storage().instance().get(&DataKey::Admin);
-
-        // Use .clone() here too
-        if stored_admin != Some(admin.clone()) {
-            return Err(SavingsError::Unauthorized);
-        }
+    pub fn unpause(env: Env, caller: Address) -> Result<(), SavingsError> {
+        caller.require_auth();
+        governance::validate_admin_or_governance(&env, &caller)?;
 
         env.storage().persistent().set(&DataKey::Paused, &false);
-
-        // Extend TTL on config update
         ttl::extend_config_ttl(&env, &DataKey::Paused);
-
-        env.events().publish((symbol_short!("unpause"), admin), ());
+        env.events().publish((symbol_short!("unpause"), caller), ());
         Ok(())
     }
 
@@ -776,6 +756,61 @@ impl NesteraContract {
 
     // ========== Governance Functions ==========
 
+    /// Initializes voting configuration (admin only)
+    pub fn init_voting_config(
+        env: Env,
+        admin: Address,
+        quorum: u32,
+        voting_period: u64,
+        timelock_duration: u64,
+    ) -> Result<(), SavingsError> {
+        let config = governance::VotingConfig {
+            quorum,
+            voting_period,
+            timelock_duration,
+        };
+        governance::init_voting_config(&env, admin, config)
+    }
+
+    /// Gets the voting configuration
+    pub fn get_voting_config(env: Env) -> Result<governance::VotingConfig, SavingsError> {
+        governance::get_voting_config(&env)
+    }
+
+    /// Creates a new governance proposal
+    pub fn create_proposal(
+        env: Env,
+        creator: Address,
+        description: String,
+    ) -> Result<u64, SavingsError> {
+        governance::create_proposal(&env, creator, description)
+    }
+
+    /// Creates a governance proposal with an action
+    pub fn create_action_proposal(
+        env: Env,
+        creator: Address,
+        description: String,
+        action: governance::ProposalAction,
+    ) -> Result<u64, SavingsError> {
+        governance::create_action_proposal(&env, creator, description, action)
+    }
+
+    /// Gets a proposal by ID
+    pub fn get_proposal(env: Env, proposal_id: u64) -> Option<governance::Proposal> {
+        governance::get_proposal(&env, proposal_id)
+    }
+
+    /// Gets an action proposal by ID
+    pub fn get_action_proposal(env: Env, proposal_id: u64) -> Option<governance::ActionProposal> {
+        governance::get_action_proposal(&env, proposal_id)
+    }
+
+    /// Lists all proposal IDs
+    pub fn list_proposals(env: Env) -> Vec<u64> {
+        governance::list_proposals(&env)
+    }
+
     /// Gets the voting power for a user based on their lifetime deposited funds
     pub fn get_voting_power(env: Env, user: Address) -> u128 {
         governance::get_voting_power(&env, &user)
@@ -790,6 +825,16 @@ impl NesteraContract {
     ) -> Result<(), SavingsError> {
         governance::cast_vote(&env, user, proposal_id, support)
     }
+
+    /// Activates governance (admin only, one-time)
+    pub fn activate_governance(env: Env, admin: Address) -> Result<(), SavingsError> {
+        governance::activate_governance(&env, admin)
+    }
+
+    /// Checks if governance is active
+    pub fn is_governance_active(env: Env) -> bool {
+        governance::is_governance_active(&env)
+    }
 }
 
 #[cfg(test)]
@@ -802,5 +847,7 @@ mod governance_tests;
 mod rates_test;
 #[cfg(test)]
 mod test;
+#[cfg(test)]
+mod transition_tests;
 #[cfg(test)]
 mod ttl_tests;

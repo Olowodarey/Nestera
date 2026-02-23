@@ -533,21 +533,21 @@ fn test_non_admin_cannot_pause() {
 
 #[test]
 fn test_interest_rate_configuration() {
-    let (_env, client, _admin, _user1, _user2, _user3) = setup_env();
+    let (_env, client, admin, _user1, _user2, _user3) = setup_env();
 
     // Set rates for different plan types
-    client.set_flexi_rate(&300); // 3%
+    client.set_flexi_rate(&admin, &300); // 3%
     assert_eq!(client.get_flexi_rate(), 300);
 
-    client.set_goal_rate(&500); // 5%
+    client.set_goal_rate(&admin, &500); // 5%
     assert_eq!(client.get_goal_rate(), 500);
 
-    client.set_group_rate(&400); // 4%
+    client.set_group_rate(&admin, &400); // 4%
     assert_eq!(client.get_group_rate(), 400);
 
     // Set lock rates for different durations
-    client.set_lock_rate(&30, &600); // 30 days = 6%
-    client.set_lock_rate(&90, &900); // 90 days = 9%
+    client.set_lock_rate(&admin, &30, &600); // 30 days = 6%
+    client.set_lock_rate(&admin, &90, &900); // 90 days = 9%
 }
 
 // =============================================================================
