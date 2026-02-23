@@ -43,6 +43,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message,
       timestamp: new Date().toISOString(),
       path: request.url,
+      message:
+        typeof message === 'object' && message !== null
+          ? (message as { message?: string }).message
+          : message,
     };
 
     if (status >= 500) {
