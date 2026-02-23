@@ -3,6 +3,10 @@ export default () => ({
   database: {
     url: process.env.DATABASE_URL,
   },
+  jwt: {
+    secret: process.env.JWT_SECRET,
+    expiration: process.env.JWT_EXPIRATION,
+  },
   stellar: {
     network: process.env.STELLAR_NETWORK || 'testnet',
     rpcUrl: process.env.SOROBAN_RPC_URL,
