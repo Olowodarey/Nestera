@@ -135,7 +135,7 @@ pub fn create_action_proposal(
     if get_voting_power(env, &creator) < config.proposal_threshold {
         return Err(SavingsError::InsufficientBalance);
     }
-    
+
     let proposal_id = get_next_proposal_id(env);
     let now = env.ledger().timestamp();
 
@@ -259,7 +259,7 @@ pub fn vote(
     voter.require_auth();
 
     // Validate vote_type: 1=for, 2=against, 3=abstain
-    if vote_type < 1 || vote_type > 3 {
+    if !(1..=3).contains(&vote_type) {
         return Err(SavingsError::InvalidAmount);
     }
 
@@ -268,7 +268,7 @@ pub fn vote(
     if weight == 0 {
         return Err(SavingsError::InsufficientBalance);
     }
-    
+
     let config = get_voting_config(env)?;
     let capped_weight = weight.min(config.max_voting_power);
 
@@ -403,7 +403,7 @@ pub fn queue_proposal(env: &Env, proposal_id: u64) -> Result<(), SavingsError> {
         }
 
         // Check quorum
-        let config = get_voting_config(env)?;
+        let _config = get_voting_config(env)?;
         let total_votes = proposal
             .for_votes
             .checked_add(proposal.against_votes)
