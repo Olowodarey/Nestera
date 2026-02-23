@@ -1,0 +1,21 @@
+.dashboard-topnav{
+  position:sticky;
+  top:0;
+  right:0;
+  height:64px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 20px;
+  background:transparent;
+  z-index:40;
+  backdrop-filter: blur(6px);
+}
+.topnav-left .greeting{margin:0;color:#dff; font-weight:600}
+.topnav-actions{display:flex;align-items:center;gap:12px}
+.icon-btn{background:rgba(255,255,255,0.02);border:0;padding:8px;border-radius:8px;color:#bfe}
+.avatar{width:36px;height:36px;border-radius:999px;background:linear-gradient(180deg,#08c1c1,#0fa3a3);display:flex;align-items:center;justify-content:center;font-weight:700;color:#021515}
+
+@media (max-width:700px){
+  .topnav-left .greeting{display:none}
+}

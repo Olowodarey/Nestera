@@ -1,0 +1,28 @@
+.networth-card{
+  position:relative;
+  background:linear-gradient(180deg, rgba(4,20,22,0.66), rgba(6,18,20,0.5));
+  border:1px solid rgba(6,110,110,0.12);
+  border-radius:18px;
+  padding:28px 28px 28px 28px;
+  color:#e6ffff;
+  overflow:hidden;
+  min-height:160px;
+  box-shadow: 0 10px 30px rgba(2,12,14,0.6);
+  backdrop-filter: blur(6px);
+}
+.networth-body{position:relative;z-index:2}
+.networth-top{display:flex;justify-content:space-between;align-items:center}
+.networth-label{font-size:12px;color:#9bb7b7;font-weight:600}
+.networth-change-pill{background:rgba(12,120,120,0.12);padding:6px 10px;border-radius:12px;font-weight:600;color:#7ff0ef}
+.networth-change-pill .muted{color:#cfe}
+.networth-amount{font-size:48px;font-weight:800;margin-top:10px;letter-spacing:-0.6px}
+.networth-footer{margin-top:10px;color:#95b7b7;font-size:13px}
+
+.networth-wave{position:absolute;right:-30px;top:0;width:84%;height:110%;opacity:0.92;z-index:1}
+
+.networth-change-pill{background:linear-gradient(90deg, rgba(3,116,116,0.18), rgba(6,140,140,0.10));padding:8px 12px;border-radius:14px;font-weight:700;color:#8ef4ef;display:inline-flex;gap:8px;align-items:center}
+.networth-change-pill .muted{color:#cfe;font-size:13px;font-weight:600}
+
+@media (max-width:800px){
+  .networth-amount{font-size:28px}
+}
