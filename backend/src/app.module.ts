@@ -13,6 +13,7 @@ import { BlockchainModule } from './modules/blockchain/blockchain.module';
 import { UserModule } from './modules/user/user.module';
 import { MailModule } from './modules/mail/mail.module';
 import { RedisCacheModule } from './modules/cache/cache.module';
+import { WebhooksModule } from './modules/webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { RedisCacheModule } from './modules/cache/cache.module';
     BlockchainModule,
     UserModule,
     MailModule,
+    WebhooksModule,
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
@@ -48,4 +50,4 @@ import { RedisCacheModule } from './modules/cache/cache.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

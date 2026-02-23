@@ -12,6 +12,7 @@ export const envValidationSchema = Joi.object({
   SOROBAN_RPC_URL: Joi.string().uri().required(),
   HORIZON_URL: Joi.string().uri().required(),
   CONTRACT_ID: Joi.string().required(),
+  STELLAR_WEBHOOK_SECRET: Joi.string().min(16).required(),
   REDIS_URL: Joi.string().uri().optional(),
 
   MAIL_HOST: Joi.string().optional(),

@@ -12,6 +12,7 @@ export default () => ({
     rpcUrl: process.env.SOROBAN_RPC_URL,
     horizonUrl: process.env.HORIZON_URL,
     contractId: process.env.CONTRACT_ID,
+    webhookSecret: process.env.STELLAR_WEBHOOK_SECRET,
   },
   redis: {
     url: process.env.REDIS_URL,
