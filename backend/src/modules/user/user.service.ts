@@ -1,26 +1,20 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import { PrismaService } from '../../prisma/prisma.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from './entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
-
-const USER_SELECT = {
-  id: true,
-  email: true,
-  name: true,
-  bio: true,
-  avatarUrl: true,
-  createdAt: true,
-  updatedAt: true,
-};
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
 
   async findById(id: string) {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.userRepository.findOne({
       where: { id },
-      select: USER_SELECT,
+      select: ['id', 'email', 'name', 'bio', 'createdAt', 'updatedAt'],
     });
 
     if (!user) {
@@ -33,41 +27,38 @@ export class UserService {
   async update(id: string, dto: UpdateUserDto) {
     await this.findById(id);
 
-    return this.prisma.user.update({
-      where: { id },
-      data: dto,
-      select: USER_SELECT,
-    });
+    await this.userRepository.update(id, dto);
+
+    return this.findById(id);
   }
 
   async findByEmail(email: string) {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.userRepository.findOne({
       where: { email },
     });
     return user;
   }
 
-  async create(data: Prisma.UserCreateInput) {
-    return this.prisma.user.create({
-      data,
-      select: USER_SELECT,
-    });
+  async create(data: Partial<User>) {
+    const newEntity = this.userRepository.create(data);
+    const savedUser = await this.userRepository.save(newEntity);
+
+    // Return with only selected fields to match old behavior
+    return this.findById(savedUser.id);
   }
 
   async updateAvatar(userId: string, avatarUrl: string) {
     await this.findById(userId);
 
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: { avatarUrl },
-      select: USER_SELECT,
-    });
+    await this.userRepository.update(userId, { avatarUrl });
+
+    return this.findById(userId);
   }
 
   async remove(id: string) {
-    await this.findById(id);
+    const user = await this.findById(id);
 
-    await this.prisma.user.delete({ where: { id } });
+    await this.userRepository.remove(user);
 
     return { message: 'User deleted successfully' };
   }

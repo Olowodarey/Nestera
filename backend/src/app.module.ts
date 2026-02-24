@@ -6,7 +6,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import configuration from './config/configuration';
 import { envValidationSchema } from './config/env.validation';
-import { PrismaModule } from './prisma/prisma.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigService } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { BlockchainModule } from './modules/blockchain/blockchain.module';
@@ -26,7 +27,15 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
         abortEarly: true,
       },
     }),
-    PrismaModule,
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        url: configService.get<string>('database.url'),
+        autoLoadEntities: true,
+        synchronize: true,
+      }),
+    }),
     AuthModule,
     RedisCacheModule,
     HealthModule,
@@ -50,4 +59,4 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

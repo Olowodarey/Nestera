@@ -27,9 +27,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const exceptionResponse = exception.getResponse();
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
-      } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
+      } else if (
+        typeof exceptionResponse === 'object' &&
+        exceptionResponse !== null
+      ) {
         const msg = (exceptionResponse as Record<string, unknown>).message;
-        message = Array.isArray(msg) ? msg.join('; ') : String(msg ?? 'An error occurred');
+        message = Array.isArray(msg)
+          ? msg.join('; ')
+          : String(msg ?? 'An error occurred');
       } else {
         message = 'An error occurred';
       }

@@ -44,7 +44,7 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly storageService: StorageService,
-  ) { }
+  ) {}
 
   @Get('me')
   getMe(@CurrentUser() user: { id: string }) {
@@ -57,10 +57,7 @@ export class UserController {
   }
 
   @Patch('me')
-  updateMe(
-    @CurrentUser() user: { id: string },
-    @Body() dto: UpdateUserDto,
-  ) {
+  updateMe(@CurrentUser() user: { id: string }, @Body() dto: UpdateUserDto) {
     return this.userService.update(user.id, dto);
   }
 

@@ -21,7 +21,10 @@ import { MailService } from './mail.service';
           },
         },
         defaults: {
-          from: configService.get<string>('mail.from', '"Nestera" <noreply@nestera.io>'),
+          from: configService.get<string>(
+            'mail.from',
+            '"Nestera" <noreply@nestera.io>',
+          ),
         },
         template: {
           dir: join(__dirname, 'templates'),
