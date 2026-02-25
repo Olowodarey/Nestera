@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod governance_tests {
-        use soroban_sdk::testutils::Ledger;
+    use soroban_sdk::testutils::Ledger;
     #[test]
     fn test_full_governance_lifecycle() {
         let (env, client, admin) = setup_contract();
@@ -18,8 +18,8 @@ mod governance_tests {
         let desc = String::from_str(&env, "Lifecycle proposal");
         let proposal_id = client.create_proposal(&creator, &desc);
 
-            client.vote(&proposal_id, &1, &voter1); // For
-            client.vote(&proposal_id, &1, &voter2); // For
+        client.vote(&proposal_id, &1, &voter1); // For
+        client.vote(&proposal_id, &1, &voter2); // For
 
         // Advance ledger time to after voting period
         env.ledger().with_mut(|li| li.timestamp += 11);
