@@ -16,6 +16,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { MailModule } from './modules/mail/mail.module';
 import { RedisCacheModule } from './modules/cache/cache.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
+import { ClaimsModule } from './modules/claims/claims.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
     AdminModule,
     MailModule,
     WebhooksModule,
+    ClaimsModule,
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
