@@ -32,13 +32,13 @@ const steps = [
 
 const HowItWorks: React.FC = () => {
   return (
-    <section className="py-20 bg-gray-50 dark:bg-gray-900" id="how-it-works">
+    <section className="py-20 bg-[#061a1a]" id="how-it-works">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white sm:text-4xl">
+          <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
             How It Works
           </h2>
-          <p className="mt-4 text-xl text-gray-600 dark:text-gray-300">
+          <p className="mt-4 text-xl text-[rgba(180,210,210,0.7)]">
             Three simple steps to start saving securely on-chain.
           </p>
         </div>
@@ -47,15 +47,15 @@ const HowItWorks: React.FC = () => {
           {steps.map((step, index) => (
             <div
               key={index}
-              className="group cursor-pointer bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-100 dark:border-gray-700 transition-all duration-300 ease-in-out md:hover:-translate-y-1 md:hover:shadow-lg"
+              className="group cursor-pointer bg-[#061a1a] border border-white/[0.06] rounded-xl p-8 transition-all duration-300 ease-in-out md:hover:-translate-y-1 md:hover:border-[rgba(0,212,192,0.25)] md:hover:shadow-[0_10px_30px_rgba(0,0,0,0.2)]"
             >
-              <div className="w-16 h-16 bg-[#00d4c0] bg-opacity-10 rounded-full flex items-center justify-center mb-6 mx-auto transform transition-transform duration-300 ease-in-out group-hover:scale-110">
+              <div className="w-16 h-16 bg-[rgba(0,212,192,0.1)] rounded-full flex items-center justify-center mb-6 mx-auto transition-transform duration-300 ease-in-out group-hover:scale-110">
                 {step.icon}
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white text-center mb-4">
+              <h3 className="text-xl font-bold text-white text-center mb-4">
                 {step.title}
               </h3>
-              <p className="text-gray-600 dark:text-gray-300 text-center leading-relaxed">
+              <p className="text-[rgba(180,210,210,0.7)] text-center leading-relaxed">
                 {step.description}
               </p>
             </div>
