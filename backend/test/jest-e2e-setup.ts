@@ -29,13 +29,18 @@ process.env.SOROBAN_RPC_URL =
   process.env.SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org';
 process.env.CONTRACT_ID =
   process.env.CONTRACT_ID ||
-  'CBQHNAXSI55GX2UCLUHOGICTX40YXZNXNEWRQF7Z3Y5SKBRZGTMUBCVu';
+  'CBWHJPY37LHMQJ726PN26YLWWP3CQQ7T7NYJT2KMXNQQPLR7QDNVWZGK';
 
 // Email configuration (mock values for testing)
 process.env.MAIL_SERVICE = process.env.MAIL_SERVICE || 'test';
 process.env.MAIL_FROM = process.env.MAIL_FROM || 'test@example.com';
+process.env.MAIL_HOST = process.env.MAIL_HOST || 'localhost';
+process.env.MAIL_PORT = process.env.MAIL_PORT || '1025';
 process.env.MAIL_USER = process.env.MAIL_USER || 'test_user';
 process.env.MAIL_PASS = process.env.MAIL_PASS || 'test_password';
+
+// Redis configuration
+process.env.REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 
 // Webhook secret
 process.env.STELLAR_WEBHOOK_SECRET =

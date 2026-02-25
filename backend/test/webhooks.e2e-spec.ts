@@ -5,8 +5,15 @@ import { AppModule } from './../src/app.module';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 
-// E2E tests require a running database. Skipping to prevent CI failures.
-// To enable: Remove describe.skip() and ensure PostgreSQL is running.
+/**
+ * NOTE: These e2e tests are currently skipped as they require a running PostgreSQL database.
+ * To run e2e tests, ensure:
+ * 1. PostgreSQL is running with credentials in DATABASE_URL env var
+ * 2. Database schema is migrated
+ * 3. Run: pnpm run test:e2e
+ * 
+ * For CI/CD, unit tests and build are the primary checks.
+ */
 describe.skip('Webhooks (e2e)', () => {
   let app: INestApplication;
   const mockSecret = 'test_webhook_secret_key_123456';
