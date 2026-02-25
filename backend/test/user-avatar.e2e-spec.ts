@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication, ValidationPipe, ExecutionContext } from '@nestjs/common';
 import request from 'supertest';
 import { join } from 'path';
 import { writeFileSync, unlinkSync, existsSync } from 'fs';
@@ -7,7 +7,6 @@ import { UserModule } from '../src/modules/user/user.module';
 import { UserService } from '../src/modules/user/user.service';
 import { ConfigModule } from '@nestjs/config';
 import { JwtAuthGuard } from '../src/auth/guards/jwt-auth.guard';
-import { ExecutionContext } from '@nestjs/common';
 
 /**
  * NOTE: These e2e tests are currently skipped as they require a running PostgreSQL database.
