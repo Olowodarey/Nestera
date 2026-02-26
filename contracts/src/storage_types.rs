@@ -93,6 +93,10 @@ pub enum SavingsError {
     LockNotMatured = 5,
     AlreadyWithdrawn = 6,
     Unauthorized = 7,
+    /// Returned when attempting to operate on a disabled strategy
+    StrategyDisabled = 8,
+    /// Returned when the specified strategy does not exist
+    StrategyNotFound = 9,
 }
 
 /// Represents a Goal Save plan with target amount
@@ -190,6 +194,8 @@ pub enum DataKey {
     GroupRate,
     /// Maps duration (days) to interest rate
     LockRate(u64),
+    /// Maps (plan_type, plan_id) to disabled status
+    DisabledStrategy(PlanType, u64),
 }
 
 /// Payload structure that the admin signs off-chain

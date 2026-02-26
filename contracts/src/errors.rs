@@ -210,15 +210,24 @@ pub enum SavingsError {
     /// Config initialization can only happen once.
     ConfigAlreadyInitialized = 91,
 
-    // ========== Strategy Errors (92-99) ==========
-    /// Returned when a yield strategy is not found in the registry.
-    StrategyNotFound = 92,
+    /// Returned when attempting to operate on a disabled strategy.
+    ///
+    /// Emergency withdraw has been executed and strategy is now disabled.
+    StrategyDisabled = 92,
+
+    /// Returned when the specified strategy does not exist.
+    ///
+    /// This occurs when querying a non-existent strategy.
+    StrategyNotFound = 93,
+
+    /// Returned when attempting to withdraw from a plan that has already been withdrawn.
+    AlreadyWithdrawn = 94,
+
+    /// Returned when the specified lock plan does not exist.
+    LockNotFound = 95,
 
     /// Returned when attempting to register a strategy that already exists.
-    StrategyAlreadyRegistered = 93,
-
-    /// Returned when attempting to deposit into a disabled strategy.
-    StrategyDisabled = 94,
+    StrategyAlreadyRegistered = 96,
 }
 
 #[cfg(test)]
