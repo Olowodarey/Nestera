@@ -547,14 +547,16 @@ impl NesteraContract {
                 // For Flexi, withdraw the entire balance
                 let flexi_key = DataKey::FlexiBalance(user.clone());
                 let balance: i128 = env.storage().persistent().get(&flexi_key).unwrap_or(0);
-                
+
                 if balance > 0 {
                     // Update flexi balance to 0
                     env.storage().persistent().set(&flexi_key, &0i128);
-                    
+
                     // Update user total balance
                     let user_key = DataKey::User(user.clone());
-                    if let Some(mut user_data) = env.storage().persistent().get::<DataKey, User>(&user_key) {
+                    if let Some(mut user_data) =
+                        env.storage().persistent().get::<DataKey, User>(&user_key)
+                    {
                         user_data.total_balance = user_data.total_balance.saturating_sub(balance);
                         env.storage().persistent().set(&user_key, &user_data);
                     }
@@ -565,7 +567,7 @@ impl NesteraContract {
                 // For Lock, get the lock save and withdraw if exists
                 let lock_key = DataKey::LockSave(plan_id);
                 let lock_opt: Option<LockSave> = env.storage().persistent().get(&lock_key);
-                
+
                 if let Some(mut lock) = lock_opt {
                     if lock.is_withdrawn {
                         return Err(SavingsError::AlreadyWithdrawn);
@@ -573,10 +575,12 @@ impl NesteraContract {
                     let amount = lock.amount;
                     lock.is_withdrawn = true;
                     env.storage().persistent().set(&lock_key, &lock);
-                    
+
                     // Update user total balance
                     let user_key = DataKey::User(user.clone());
-                    if let Some(mut user_data) = env.storage().persistent().get::<DataKey, User>(&user_key) {
+                    if let Some(mut user_data) =
+                        env.storage().persistent().get::<DataKey, User>(&user_key)
+                    {
                         user_data.total_balance = user_data.total_balance.saturating_sub(amount);
                         env.storage().persistent().set(&user_key, &user_data);
                     }
@@ -589,7 +593,7 @@ impl NesteraContract {
                 // For Goal, get the goal save and withdraw
                 let goal_key = DataKey::GoalSave(plan_id);
                 let goal_opt: Option<GoalSave> = env.storage().persistent().get(&goal_key);
-                
+
                 if let Some(mut goal) = goal_opt {
                     if goal.is_withdrawn {
                         return Err(SavingsError::AlreadyWithdrawn);
@@ -597,10 +601,12 @@ impl NesteraContract {
                     let amount = goal.current_amount;
                     goal.is_withdrawn = true;
                     env.storage().persistent().set(&goal_key, &goal);
-                    
+
                     // Update user total balance
                     let user_key = DataKey::User(user.clone());
-                    if let Some(mut user_data) = env.storage().persistent().get::<DataKey, User>(&user_key) {
+                    if let Some(mut user_data) =
+                        env.storage().persistent().get::<DataKey, User>(&user_key)
+                    {
                         user_data.total_balance = user_data.total_balance.saturating_sub(amount);
                         env.storage().persistent().set(&user_key, &user_data);
                     }
@@ -613,27 +619,34 @@ impl NesteraContract {
                 // For Group, get the group save and process emergency break
                 let group_key = DataKey::GroupSave(plan_id);
                 let group_opt: Option<GroupSave> = env.storage().persistent().get(&group_key);
-                
+
                 if let Some(mut group) = group_opt {
                     if group.is_completed {
                         return Err(SavingsError::PlanCompleted);
                     }
                     // Return current amount for the user
                     let contribution_key = DataKey::GroupMemberContribution(plan_id, user.clone());
-                    let contribution: i128 = env.storage().persistent().get(&contribution_key).unwrap_or(0);
-                    
+                    let contribution: i128 = env
+                        .storage()
+                        .persistent()
+                        .get(&contribution_key)
+                        .unwrap_or(0);
+
                     if contribution > 0 {
                         // Clear user contribution
                         env.storage().persistent().set(&contribution_key, &0i128);
-                        
+
                         // Update group current amount
                         group.current_amount = group.current_amount.saturating_sub(contribution);
                         env.storage().persistent().set(&group_key, &group);
-                        
+
                         // Update user total balance
                         let user_key = DataKey::User(user.clone());
-                        if let Some(mut user_data) = env.storage().persistent().get::<DataKey, User>(&user_key) {
-                            user_data.total_balance = user_data.total_balance.saturating_sub(contribution);
+                        if let Some(mut user_data) =
+                            env.storage().persistent().get::<DataKey, User>(&user_key)
+                        {
+                            user_data.total_balance =
+                                user_data.total_balance.saturating_sub(contribution);
                             env.storage().persistent().set(&user_key, &user_data);
                         }
                     }
@@ -660,7 +673,10 @@ impl NesteraContract {
     /// Checks if a strategy is disabled
     pub fn is_strategy_disabled(env: Env, plan_type: PlanType, plan_id: u64) -> bool {
         let disabled_key = DataKey::DisabledStrategy(plan_type, plan_id);
-        env.storage().persistent().get(&disabled_key).unwrap_or(false)
+        env.storage()
+            .persistent()
+            .get(&disabled_key)
+            .unwrap_or(false)
     }
 
     // --- Remaining views and utilities ---
