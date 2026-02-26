@@ -209,6 +209,22 @@ pub enum SavingsError {
     ///
     /// Config initialization can only happen once.
     ConfigAlreadyInitialized = 91,
+
+    /// Returned when attempting to operate on a disabled strategy.
+    ///
+    /// Emergency withdraw has been executed and strategy is now disabled.
+    StrategyDisabled = 92,
+
+    /// Returned when the specified strategy does not exist.
+    ///
+    /// This occurs when querying a non-existent strategy.
+    StrategyNotFound = 93,
+
+    /// Returned when attempting to withdraw from a plan that has already been withdrawn.
+    AlreadyWithdrawn = 94,
+
+    /// Returned when the specified lock plan does not exist.
+    LockNotFound = 95,
 }
 
 #[cfg(test)]
